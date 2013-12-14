@@ -70,22 +70,18 @@ public class HBaseTest {
    * Test getting a table.
    */
   @Test
-  public final void testGetTable() {
+  public final void testGetTable() throws IOException, HBaseException {
     testHBase();
+    createTable(TABLE_NAME, FAMILY);
     try {
-      if (HBaseLab.isTableAvailable(conf, TABLE_NAME)) {
-        fail("Table exists, not expected");
-      }
-      createTable(TABLE_NAME, FAMILY);
       if (!isTableAvailable(TABLE_NAME)) {
         fail("Table does not exist");
       }
       HTableInterface table = getTable(TABLE_NAME);
       assertNotNull("HTableInterface object is null", table);
       assertEquals(TABLE_NAME, Bytes.toString(table.getTableName()));
+    } finally {
       dropTable(TABLE_NAME);
-    } catch (Exception e) {
-      fail("Unexpected " + e.getClass().getSimpleName());
     }
   }
 
@@ -93,17 +89,13 @@ public class HBaseTest {
    * Test creating a table.
    */
   @Test
-  public final void testCreateTable() {
+  public final void testCreateTable() throws IOException, HBaseException {
     testHBase();
+    HBaseLab.createTable(conf, TABLE_NAME, FAMILY);
     try {
-      if (isTableAvailable(TABLE_NAME)) {
-        fail("Table exists, not expected");
-      }
-      HBaseLab.createTable(conf, TABLE_NAME, FAMILY);
       assert (isTableAvailable(TABLE_NAME));
+    } finally {
       dropTable(TABLE_NAME);
-    } catch (Exception e) {
-      fail("Unexpected " + e.getClass().getName());
     }
   }
 
@@ -111,32 +103,22 @@ public class HBaseTest {
    * Test dropping a table.
    */
   @Test
-  public final void testDropTable() {
+  public final void testDropTable() throws IOException, HBaseException {
     testHBase();
-    try {
-      if (isTableAvailable(TABLE_NAME)) {
-        fail("Table exists, not expected");
-      }
-      createTable(TABLE_NAME, FAMILY);
-      HBaseLab.dropTable(conf, TABLE_NAME);
-      assertTrue(!isTableAvailable(TABLE_NAME));
-    } catch (Exception e) {
-      fail("Unexpected " + e.getClass().getName());
-    }
+    createTable(TABLE_NAME, FAMILY);
+    HBaseLab.dropTable(conf, TABLE_NAME);
+    assertTrue(!isTableAvailable(TABLE_NAME));
   }
 
   /**
    * Test writing a cell to a table and reading it back.
    */
   @Test
-  public final void testWriteTable() {
+  public final void testWriteTable() throws IOException, HBaseException, InterruptedException {
     testHBase();
+    createTable(TABLE_NAME, FAMILY);
     try {
       String value = "123456";
-      if (isTableAvailable(TABLE_NAME)) {
-        fail("Table " + TABLE_NAME + " exists, not expected");
-      }
-      createTable(TABLE_NAME, FAMILY);
       HBaseLab.put(TABLE_NAME, FAMILY, QUALIFIER, KEY, "ZZZ");
       Thread.sleep(SLEEP);
       HBaseLab.put(TABLE_NAME, FAMILY, QUALIFIER, KEY, value);
@@ -162,9 +144,8 @@ public class HBaseTest {
       r = HBaseLab.getLatest(TABLE_NAME, KEY);
       values = r.getColumn(Bytes.toBytes(FAMILY), Bytes.toBytes(QUALIFIER));
       assertEquals(0, values.size());
+    } finally {
       dropTable(TABLE_NAME);
-    } catch (Exception e) {
-      fail("Unexpected " + e.getClass().getSimpleName());
     }
   }
 
@@ -172,14 +153,11 @@ public class HBaseTest {
    * The increment method increases a cell value by a specified number.
    */
   @Test
-  public final void testIncrementTable() {
+  public final void testIncrementTable() throws IOException, HBaseException {
     testHBase();
+    createTable(TABLE_NAME, FAMILY);
     try {
       long incrementCount = INCREMENT_COUNT;
-      if (isTableAvailable(TABLE_NAME)) {
-        fail("Table exists, not expected");
-      }
-      createTable(TABLE_NAME, FAMILY);
       HTableInterface table = getTable(TABLE_NAME);
       for (int i = 0; i < incrementCount; i++) {
         HBaseLab.increment(TABLE_NAME, KEY, FAMILY, QUALIFIER, 1L);
@@ -191,9 +169,8 @@ public class HBaseTest {
       assertEquals(1, values.size());
       KeyValue kv = values.get(0);
       assertEquals(incrementCount, Bytes.toLong(kv.getValue()));
+    } finally {
       dropTable(TABLE_NAME);
-    } catch (Exception e) {
-      fail("Unexpected " + e.getClass().getSimpleName());
     }
   }
 
@@ -201,10 +178,10 @@ public class HBaseTest {
    * The RowFilter filters records by row key.
    */
   @Test
-  public final void testRowFilter() {
+  public final void testRowFilter() throws IOException, HBaseException {
     testHBase();
+    createTable(TABLE_NAME, FAMILY);
     try {
-      createTable(TABLE_NAME, FAMILY);
       for (int i = 0; i < ROW_COUNT; i++) {
         HBaseLab.put(TABLE_NAME, FAMILY, QUALIFIER, "row-" + i, "val-" + i);
       }
@@ -216,9 +193,8 @@ public class HBaseTest {
         count++;
       }
       assertEquals(FILTERED_ROW_COUNT, count);
+    } finally {
       dropTable(TABLE_NAME);
-    } catch (Exception e) {
-      fail("Unexpected " + e.getClass().getSimpleName());
     }
   }
   
@@ -227,10 +203,10 @@ public class HBaseTest {
    * are returned when using CompareOp.EQUAL.
    */
   @Test
-  public final void testFamilyFilter() {
+  public final void testFamilyFilter() throws IOException, HBaseException {
     testHBase();
+    createTable(TABLE_NAME, FAMILY);
     try {
-      createTable(TABLE_NAME, FAMILY);
       HBaseLab.addFamily(TABLE_NAME, FAMILY2);
       for (int i = 0; i < ROW_COUNT; i++) {
         HBaseLab.put(TABLE_NAME,  FAMILY,  QUALIFIER, "row-" + i, "val-" + i);
@@ -253,9 +229,8 @@ public class HBaseTest {
         count++;
       }
       assertEquals(ROW_COUNT * 2, count);
+    } finally {
       dropTable(TABLE_NAME);
-    } catch (Exception e) {
-      fail("Unexpected " + e.getClass().getSimpleName());
     }
   }
   
@@ -264,10 +239,10 @@ public class HBaseTest {
    * family/qualifier are returned when using CompareOp.EQUAL.
    */
   @Test
-  public final void testQualifierFilter() {
+  public final void testQualifierFilter() throws IOException, HBaseException {
     testHBase();
+    createTable(TABLE_NAME, FAMILY);
     try {
-      createTable(TABLE_NAME, FAMILY);
       HBaseLab.addFamily(TABLE_NAME, FAMILY2);
       for (int i = 0; i < ROW_COUNT; i++) {
         HBaseLab.put(TABLE_NAME,  FAMILY,  QUALIFIER, "row-" + i, "val-" + i);
@@ -290,9 +265,8 @@ public class HBaseTest {
         count++;
       }
       assertEquals(ROW_COUNT * 2, count);
+    } finally {
       dropTable(TABLE_NAME);
-    } catch (Exception e) {
-      fail("Unexpected " + e.getClass().getSimpleName());
     }
   }
 
@@ -300,10 +274,10 @@ public class HBaseTest {
    * The ValueFilter filters records by value.
    */
   @Test
-  public final void testValueFilter() {
+  public final void testValueFilter() throws IOException, HBaseException {
     testHBase();
+    createTable(TABLE_NAME, FAMILY);
     try {
-      createTable(TABLE_NAME, FAMILY);
       HBaseLab.addFamily(TABLE_NAME, FAMILY2);
       for (int i = 0; i < ROW_COUNT; i++) {
         HBaseLab.put(TABLE_NAME,  FAMILY,  QUALIFIER, "row-" + i, "val-" + i);
@@ -319,9 +293,8 @@ public class HBaseTest {
         assertTrue(Bytes.toString(r.value()).contains("val-0"));
       }
       assertEquals(2, count);
+    } finally {
       dropTable(TABLE_NAME);
-    } catch (Exception e) {
-      fail("Unexpected " + e.getClass().getSimpleName());
     }
   }
 
@@ -340,10 +313,10 @@ public class HBaseTest {
    * with same rowkey and value.  I got a single Result, with two KeyValue instances, one for each family/qualifier.
    */
   @Test
-  public final void testSingleColumnValueFilter() {
+  public final void testSingleColumnValueFilter() throws IOException, HBaseException {
     testHBase();
+    createTable(TABLE_NAME, FAMILY);
     try {
-      createTable(TABLE_NAME, FAMILY);
       HBaseLab.addFamily(TABLE_NAME, FAMILY2);
       for (int i = 0; i < ROW_COUNT; i++) {
         HBaseLab.put(TABLE_NAME,  FAMILY,  QUALIFIER, "row-" + i, "val-" + i);
@@ -365,16 +338,15 @@ public class HBaseTest {
           LOG.info(Bytes.toString(kv.getQualifier()));
           LOG.info(Bytes.toString(kv.getValue()));
           LOG.info(Bytes.toString(kv.getRow()));
-          //assertEquals(FAMILY, Bytes.toString(kv.getFamily()));
-          //assertEquals(QUALIFIER, Bytes.toString(kv.getQualifier()));
+          assertEquals(FAMILY, Bytes.toString(kv.getFamily()));
+          assertEquals(QUALIFIER, Bytes.toString(kv.getQualifier()));
         }
         LOG.info(Bytes.toString(r.value()));
         LOG.info(Bytes.toString(r.getRow()));
-        //assertEquals("val-0", Bytes.toString(r.value()));
+        assertEquals("val-0", Bytes.toString(r.value()));
       }
+    } finally {
       dropTable(TABLE_NAME);
-    } catch (Exception e) {
-      fail("Unexpected " + e.getClass().getSimpleName());
     }
   }
 
@@ -382,18 +354,17 @@ public class HBaseTest {
    * Test adding a column family to an existing table.
    */
   @Test
-  public final void testAddFamily() {
+  public final void testAddFamily() throws IOException, HBaseException {
     testHBase();
+    createTable(TABLE_NAME, FAMILY);
     try {
-      createTable(TABLE_NAME, FAMILY);
       HBaseLab.addFamily(TABLE_NAME, FAMILY2);
       HBaseLab.put(TABLE_NAME, FAMILY2, QUALIFIER2, KEY, "123456");
       Result r = HBaseLab.getLatest(TABLE_NAME, KEY);
       r.getColumnLatest(Bytes.toBytes(FAMILY2), Bytes.toBytes(QUALIFIER2));
       assertEquals("123456", Bytes.toString(r.value()));
+    } finally {
       dropTable(TABLE_NAME);
-    } catch (Exception e) {
-      fail("Unexpected " + e.getClass().getSimpleName());
     }
   }
 
@@ -401,10 +372,10 @@ public class HBaseTest {
    * Test dropping a column family from an existing table.
    */
   @Test
-  public final void testDropFamily() {
+  public final void testDropFamily() throws IOException, HBaseException {
     testHBase();
+    createTable(TABLE_NAME, FAMILY);
     try {
-      createTable(TABLE_NAME, FAMILY);
       HBaseLab.addFamily(TABLE_NAME, FAMILY2);
       HBaseLab.put(TABLE_NAME, FAMILY, QUALIFIER, KEY, "XYZ");
       HBaseLab.put(TABLE_NAME, FAMILY2, QUALIFIER2, KEY, "123456");
@@ -412,9 +383,8 @@ public class HBaseTest {
       Result r = HBaseLab.getLatest(TABLE_NAME, KEY);
       assertTrue(r.containsColumn(Bytes.toBytes(FAMILY2), Bytes.toBytes(QUALIFIER2)));
       assertTrue(!r.containsColumn(Bytes.toBytes(FAMILY), Bytes.toBytes(QUALIFIER)));
+    } finally {
       dropTable(TABLE_NAME);
-    } catch (Exception e) {
-      fail("Unexpected " + e.getClass().getSimpleName());
     }
   }
 
@@ -422,14 +392,13 @@ public class HBaseTest {
    * testContainsFamily method.
    */
   @Test
-  public final void testContainsFamily() {
+  public final void testContainsFamily() throws IOException, HBaseException {
     testHBase();
+    createTable(TABLE_NAME, FAMILY);
     try {
-      createTable(TABLE_NAME, FAMILY);
       assertTrue(HBaseLab.containsFamily(TABLE_NAME, FAMILY));
+    } finally {
       dropTable(TABLE_NAME);
-    } catch (Exception e) {
-      fail("Unexpected " + e.getClass().getSimpleName());
     }
   }
 
@@ -467,7 +436,9 @@ public class HBaseTest {
    */
   private static void dropTable(final String tableName) 
       throws HBaseException, IOException {
-    HBaseLab.dropTable(conf, tableName);
+    if(isTableAvailable(tableName)) {
+      HBaseLab.dropTable(conf, tableName);
+    }
   }
 
   /**

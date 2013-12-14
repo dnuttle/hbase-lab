@@ -56,6 +56,7 @@ public class HBaseTest {
   public static void setUp() {
     try {
       conf = HBaseConfiguration.create();
+      conf.set("hbase.tmp.dir", "./tmp");
       LOG.info("hbase.rootdir: " + conf.get("hbase.rootdir"));
       if (isTableAvailable(TABLE_NAME)) {
         dropTable(TABLE_NAME);

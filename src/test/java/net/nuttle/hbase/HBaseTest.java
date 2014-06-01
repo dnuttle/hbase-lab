@@ -119,11 +119,11 @@ public class HBaseTest {
     createTable(TABLE_NAME, FAMILY);
     try {
       String value = "123456";
-      HBaseLab.put(TABLE_NAME, FAMILY, QUALIFIER, KEY, "ZZZ");
+      HBaseLab.put(conf, TABLE_NAME, FAMILY, QUALIFIER, KEY, "ZZZ");
       Thread.sleep(SLEEP);
-      HBaseLab.put(TABLE_NAME, FAMILY, QUALIFIER, KEY, value);
+      HBaseLab.put(conf, TABLE_NAME, FAMILY, QUALIFIER, KEY, value);
 
-      Result r = HBaseLab.getLatest(TABLE_NAME, KEY);
+      Result r = HBaseLab.getLatest(conf, TABLE_NAME, KEY);
       //The Result.value() method returns the value of the newest cell 
       //in the first column found
       assertEquals(value, Bytes.toString(r.value()));
@@ -140,8 +140,8 @@ public class HBaseTest {
       KeyValue kv = values.get(0);
       assertEquals(KEY, Bytes.toString(kv.getRow()));
       assertEquals(value, Bytes.toString(kv.getValue()));
-      HBaseLab.delete(TABLE_NAME, KEY);
-      r = HBaseLab.getLatest(TABLE_NAME, KEY);
+      HBaseLab.delete(conf, TABLE_NAME, KEY);
+      r = HBaseLab.getLatest(conf, TABLE_NAME, KEY);
       values = r.getColumn(Bytes.toBytes(FAMILY), Bytes.toBytes(QUALIFIER));
       assertEquals(0, values.size());
     } finally {
@@ -160,7 +160,7 @@ public class HBaseTest {
       long incrementCount = INCREMENT_COUNT;
       HTableInterface table = getTable(TABLE_NAME);
       for (int i = 0; i < incrementCount; i++) {
-        HBaseLab.increment(TABLE_NAME, KEY, FAMILY, QUALIFIER, 1L);
+        HBaseLab.increment(conf, TABLE_NAME, KEY, FAMILY, QUALIFIER, 1L);
         //table.incrementColumnValue(Bytes.toBytes(KEY), Bytes.toBytes(FAMILY), Bytes.toBytes(QUALIFIER), 1L);
       }
       Get g = new Get(Bytes.toBytes(KEY));
@@ -183,13 +183,13 @@ public class HBaseTest {
     createTable(TABLE_NAME, FAMILY);
     try {
       for (int i = 0; i < ROW_COUNT; i++) {
-        HBaseLab.put(TABLE_NAME, FAMILY, QUALIFIER, "row-" + i, "val-" + i);
+        HBaseLab.put(conf, TABLE_NAME, FAMILY, QUALIFIER, "row-" + i, "val-" + i);
       }
       RowFilter filter = new RowFilter(CompareFilter.CompareOp.LESS_OR_EQUAL, 
         new BinaryComparator(Bytes.toBytes("row-20")));
       ResultScanner scanner = HBaseLab.scan(TABLE_NAME, filter);
       int count = 0;
-      for (Result r : scanner) {
+      for (@SuppressWarnings("unused") Result r : scanner) {
         count++;
       }
       assertEquals(FILTERED_ROW_COUNT, count);
@@ -207,10 +207,10 @@ public class HBaseTest {
     testHBase();
     createTable(TABLE_NAME, FAMILY);
     try {
-      HBaseLab.addFamily(TABLE_NAME, FAMILY2);
+      HBaseLab.addFamily(conf, TABLE_NAME, FAMILY2);
       for (int i = 0; i < ROW_COUNT; i++) {
-        HBaseLab.put(TABLE_NAME,  FAMILY,  QUALIFIER, "row-" + i, "val-" + i);
-        HBaseLab.put(TABLE_NAME, FAMILY2, QUALIFIER2, "row-2-" + i, "val-" + i);
+        HBaseLab.put(conf, TABLE_NAME,  FAMILY,  QUALIFIER, "row-" + i, "val-" + i);
+        HBaseLab.put(conf, TABLE_NAME, FAMILY2, QUALIFIER2, "row-2-" + i, "val-" + i);
       }
       //Get all rows with family/column FAMILY2/QUALIFIER2
       FamilyFilter filter = new FamilyFilter(CompareFilter.CompareOp.EQUAL,
@@ -225,7 +225,7 @@ public class HBaseTest {
       //Now pass in a null for filter, so that all rows are returned;
       scanner = HBaseLab.scan(TABLE_NAME, null);
       count = 0;
-      for (Result r: scanner) {
+      for (@SuppressWarnings("unused") Result r: scanner) {
         count++;
       }
       assertEquals(ROW_COUNT * 2, count);
@@ -243,10 +243,10 @@ public class HBaseTest {
     testHBase();
     createTable(TABLE_NAME, FAMILY);
     try {
-      HBaseLab.addFamily(TABLE_NAME, FAMILY2);
+      HBaseLab.addFamily(conf, TABLE_NAME, FAMILY2);
       for (int i = 0; i < ROW_COUNT; i++) {
-        HBaseLab.put(TABLE_NAME,  FAMILY,  QUALIFIER, "row-" + i, "val-" + i);
-        HBaseLab.put(TABLE_NAME, FAMILY, QUALIFIER2, "row-2-" + i, "val-" + i);
+        HBaseLab.put(conf, TABLE_NAME,  FAMILY,  QUALIFIER, "row-" + i, "val-" + i);
+        HBaseLab.put(conf, TABLE_NAME, FAMILY, QUALIFIER2, "row-2-" + i, "val-" + i);
       }
       //Get all rows that have column QUALIFIER2
       QualifierFilter filter = new QualifierFilter(CompareFilter.CompareOp.EQUAL,
@@ -261,7 +261,7 @@ public class HBaseTest {
       //Now pass in a null for filter, so that all rows are returned;
       scanner = HBaseLab.scan(TABLE_NAME, null);
       count = 0;
-      for (Result r: scanner) {
+      for (@SuppressWarnings("unused") Result r: scanner) {
         count++;
       }
       assertEquals(ROW_COUNT * 2, count);
@@ -278,10 +278,10 @@ public class HBaseTest {
     testHBase();
     createTable(TABLE_NAME, FAMILY);
     try {
-      HBaseLab.addFamily(TABLE_NAME, FAMILY2);
+      HBaseLab.addFamily(conf, TABLE_NAME, FAMILY2);
       for (int i = 0; i < ROW_COUNT; i++) {
-        HBaseLab.put(TABLE_NAME,  FAMILY,  QUALIFIER, "row-" + i, "val-" + i);
-        HBaseLab.put(TABLE_NAME, FAMILY, QUALIFIER2, "row-2-" + i, "val-" + i);
+        HBaseLab.put(conf, TABLE_NAME,  FAMILY,  QUALIFIER, "row-" + i, "val-" + i);
+        HBaseLab.put(conf, TABLE_NAME, FAMILY, QUALIFIER2, "row-2-" + i, "val-" + i);
       }
       //Get all rows with family/column FAMILY2/QUALIFIER2
       ValueFilter filter = new ValueFilter(CompareFilter.CompareOp.EQUAL,
@@ -317,21 +317,19 @@ public class HBaseTest {
     testHBase();
     createTable(TABLE_NAME, FAMILY);
     try {
-      HBaseLab.addFamily(TABLE_NAME, FAMILY2);
+      HBaseLab.addFamily(conf, TABLE_NAME, FAMILY2);
       for (int i = 0; i < ROW_COUNT; i++) {
-        HBaseLab.put(TABLE_NAME,  FAMILY,  QUALIFIER, "row-" + i, "val-" + i);
-        HBaseLab.put(TABLE_NAME, FAMILY2, QUALIFIER2, "row-2-" + i, "val-" + i);
+        HBaseLab.put(conf, TABLE_NAME,  FAMILY,  QUALIFIER, "row-" + i, "val-" + i);
+        HBaseLab.put(conf, TABLE_NAME, FAMILY2, QUALIFIER2, "row-2-" + i, "val-" + i);
       }
-      HBaseLab.put(TABLE_NAME, FAMILY, QUALIFIER2, "row-0", "val-0");
+      HBaseLab.put(conf, TABLE_NAME, FAMILY, QUALIFIER2, "row-0", "val-0");
       //Get all rows with family/column FAMILY2/QUALIFIER2
       SingleColumnValueFilter filter = new SingleColumnValueFilter(Bytes.toBytes(FAMILY), Bytes.toBytes(QUALIFIER), 
         CompareFilter.CompareOp.EQUAL, Bytes.toBytes("val-0"));
       //Reverse default functionality; return only those rows that do have the specified column.
       filter.setFilterIfMissing(true);
       ResultScanner scanner = HBaseLab.scan(TABLE_NAME, filter);
-      int count = 0;
       for (Result r: scanner) {
-        count++;
         KeyValue[] kvs = r.raw();
         for (KeyValue kv : kvs) {
           LOG.info(Bytes.toString(kv.getFamily()));
@@ -358,9 +356,9 @@ public class HBaseTest {
     testHBase();
     createTable(TABLE_NAME, FAMILY);
     try {
-      HBaseLab.addFamily(TABLE_NAME, FAMILY2);
-      HBaseLab.put(TABLE_NAME, FAMILY2, QUALIFIER2, KEY, "123456");
-      Result r = HBaseLab.getLatest(TABLE_NAME, KEY);
+      HBaseLab.addFamily(conf, TABLE_NAME, FAMILY2);
+      HBaseLab.put(conf, TABLE_NAME, FAMILY2, QUALIFIER2, KEY, "123456");
+      Result r = HBaseLab.getLatest(conf, TABLE_NAME, KEY);
       r.getColumnLatest(Bytes.toBytes(FAMILY2), Bytes.toBytes(QUALIFIER2));
       assertEquals("123456", Bytes.toString(r.value()));
     } finally {
@@ -376,11 +374,11 @@ public class HBaseTest {
     testHBase();
     createTable(TABLE_NAME, FAMILY);
     try {
-      HBaseLab.addFamily(TABLE_NAME, FAMILY2);
-      HBaseLab.put(TABLE_NAME, FAMILY, QUALIFIER, KEY, "XYZ");
-      HBaseLab.put(TABLE_NAME, FAMILY2, QUALIFIER2, KEY, "123456");
-      HBaseLab.dropFamily(TABLE_NAME, FAMILY);
-      Result r = HBaseLab.getLatest(TABLE_NAME, KEY);
+      HBaseLab.addFamily(conf, TABLE_NAME, FAMILY2);
+      HBaseLab.put(conf, TABLE_NAME, FAMILY, QUALIFIER, KEY, "XYZ");
+      HBaseLab.put(conf, TABLE_NAME, FAMILY2, QUALIFIER2, KEY, "123456");
+      HBaseLab.dropFamily(conf, TABLE_NAME, FAMILY);
+      Result r = HBaseLab.getLatest(conf, TABLE_NAME, KEY);
       assertTrue(r.containsColumn(Bytes.toBytes(FAMILY2), Bytes.toBytes(QUALIFIER2)));
       assertTrue(!r.containsColumn(Bytes.toBytes(FAMILY), Bytes.toBytes(QUALIFIER)));
     } finally {
@@ -396,7 +394,7 @@ public class HBaseTest {
     testHBase();
     createTable(TABLE_NAME, FAMILY);
     try {
-      assertTrue(HBaseLab.containsFamily(TABLE_NAME, FAMILY));
+      assertTrue(HBaseLab.containsFamily(conf, TABLE_NAME, FAMILY));
     } finally {
       dropTable(TABLE_NAME);
     }

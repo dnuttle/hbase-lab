@@ -35,26 +35,12 @@ import org.apache.hadoop.hbase.util.Bytes;
 public final class HBaseLab {
 
   private static final int MAX_POOL_SIZE = 1000;
-  private static final Configuration CONF = HBaseConfiguration.create();
   private static HTablePool pool = null;
 
   /**
    * Private constructor.
    */
   private HBaseLab() {
-  }
-
-  /**
-   * main method.
-   * @param args from invocation
-   */
-  public static void main(final String[] args) {
-    try {
-      createTable(CONF, "test", "f");
-
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
   }
 
   /**
@@ -167,9 +153,9 @@ public final class HBaseLab {
    * @param family is the name of a column family to be added
    * @throws IOException
    */
-  public static void addFamily(final String tableName, final String family) 
+  public static void addFamily(final Configuration conf, final String tableName, final String family) 
       throws IOException {
-    HBaseAdmin admin = new HBaseAdmin(CONF);
+    HBaseAdmin admin = new HBaseAdmin(conf);
     try {
       admin.disableTable(tableName);
       HColumnDescriptor colfam = new HColumnDescriptor(Bytes.toBytes(family));
@@ -186,8 +172,8 @@ public final class HBaseLab {
    * @param family is the name of a column family
    * @throws IOException
    */
-  public static void dropFamily(final String tableName, final String family) throws IOException {
-    HBaseAdmin admin = new HBaseAdmin(CONF);
+  public static void dropFamily(final Configuration conf, final String tableName, final String family) throws IOException {
+    HBaseAdmin admin = new HBaseAdmin(conf);
     try {
       admin.disableTable(tableName);
       admin.deleteColumn(tableName, family);
@@ -204,8 +190,8 @@ public final class HBaseLab {
    * @return true if the column family exists in the table
    * @throws IOException
    */
-  public static boolean containsFamily(final String tableName, final String family) throws IOException {
-    HBaseAdmin admin = new HBaseAdmin(CONF);
+  public static boolean containsFamily(final Configuration conf, final String tableName, final String family) throws IOException {
+    HBaseAdmin admin = new HBaseAdmin(conf);
     try {
       HTableDescriptor desc = admin.getTableDescriptor(Bytes.toBytes(tableName));
       Collection<HColumnDescriptor> families = desc.getFamilies();
@@ -230,9 +216,9 @@ public final class HBaseLab {
    * @param value is the value to be stored.
    * @throws IOException
    */
-  public static void put(final String tableName, final String family, final String qualifier, 
+  public static void put(final Configuration conf, final String tableName, final String family, final String qualifier, 
       final String key, final String value) throws IOException {
-    HTableInterface table = getPool(CONF).getTable(tableName);
+    HTableInterface table = getPool(conf).getTable(tableName);
     Put p = new Put(Bytes.toBytes(key));
     p.add(Bytes.toBytes(family), Bytes.toBytes(qualifier), Bytes.toBytes(value));
     table.put(p);
@@ -248,9 +234,9 @@ public final class HBaseLab {
    * @return a Result instance
    * @throws IOException
    */
-  public static Result get(final String tableName, final String key, final int maxVersions) 
+  public static Result get(final Configuration conf, final String tableName, final String key, final int maxVersions) 
       throws IOException {
-    HTableInterface table = getPool(CONF).getTable(tableName);
+    HTableInterface table = getPool(conf).getTable(tableName);
     try {
       Get g = new Get(Bytes.toBytes(key));
       g.setMaxVersions(maxVersions);
@@ -268,8 +254,8 @@ public final class HBaseLab {
    * @return a Result instance
    * @throws IOException
    */
-  public static Result getLatest(final String tableName, final String key) throws IOException {
-    return get(tableName, key, 1);
+  public static Result getLatest(final Configuration conf, final String tableName, final String key) throws IOException {
+    return get(conf, tableName, key, 1);
   }
 
   /**
@@ -278,9 +264,9 @@ public final class HBaseLab {
    * @param key is a rowkey
    * @throws IOException
    */
-  public static void delete(final String tableName, final String key) 
+  public static void delete(final Configuration conf, final String tableName, final String key) 
       throws IOException {
-    HTableInterface table = getPool(CONF).getTable(tableName);
+    HTableInterface table = getPool(conf).getTable(tableName);
     try {
       Delete d = new Delete(Bytes.toBytes(key));
       table.delete(d);
@@ -299,10 +285,10 @@ public final class HBaseLab {
    * @param value is a long value to be added to the current value
    * @throws IOException
    */
-  public static void increment(final String tableName, final String key, final String family, 
+  public static void increment(final Configuration conf, final String tableName, final String key, final String family, 
     final String qualifier, final long value) 
     throws IOException {
-    HTableInterface table = getPool(CONF).getTable(tableName);
+    HTableInterface table = getPool(conf).getTable(tableName);
     try {
       table.incrementColumnValue(Bytes.toBytes(key), Bytes.toBytes(family), Bytes.toBytes(qualifier), value);
     } finally {

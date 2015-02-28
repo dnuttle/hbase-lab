@@ -303,13 +303,15 @@ public final class HBaseLab {
    * @return a ResultScanner for the table and filter
    * @throws IOException
    */
-  public static ResultScanner scan(final String tableName, final Filter filter) 
+  public static ResultScanner scan(final String tableName, final Filter filter, int caching) 
       throws IOException {
     HTableInterface table = pool.getTable(tableName);
     try {
       Scan scan = new Scan();
       scan.setFilter(filter);
+      scan.setCaching(caching);
       ResultScanner scanner = table.getScanner(scan);
+      
       return scanner;
     } finally {
       table.close();

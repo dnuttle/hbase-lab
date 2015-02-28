@@ -283,7 +283,7 @@ public class HBaseTest {
         HBaseLab.put(conf, TABLE_NAME,  FAMILY,  QUALIFIER, "row-" + i, "val-" + i);
         HBaseLab.put(conf, TABLE_NAME, FAMILY, QUALIFIER2, "row-2-" + i, "val-" + i);
       }
-      //Get all rows with family/column FAMILY2/QUALIFIER2
+      //Get all rows with value "val-0"
       ValueFilter filter = new ValueFilter(CompareFilter.CompareOp.EQUAL,
         new SubstringComparator("val-0"));
       ResultScanner scanner = HBaseLab.scan(TABLE_NAME, filter);
@@ -329,16 +329,21 @@ public class HBaseTest {
       //Reverse default functionality; return only those rows that do have the specified column.
       filter.setFilterIfMissing(true);
       ResultScanner scanner = HBaseLab.scan(TABLE_NAME, filter);
+      int count = 0;
       for (Result r: scanner) {
         KeyValue[] kvs = r.raw();
         for (KeyValue kv : kvs) {
           LOG.info(Bytes.toString(kv.getFamily()));
           LOG.info(Bytes.toString(kv.getQualifier()));
           LOG.info(Bytes.toString(kv.getValue()));
-          LOG.info(Bytes.toString(kv.getRow()));
+          LOG.info(Bytes.toString(kv.getRow()));  
           assertEquals(FAMILY, Bytes.toString(kv.getFamily()));
-          assertEquals(QUALIFIER, Bytes.toString(kv.getQualifier()));
+          //The following is invalid, if we put another instance of "val-0" in using QUALIFIER2
+          //I don't remember what I was trying to accomplish by doing that.
+          //assertEquals(QUALIFIER, Bytes.toString(kv.getQualifier()));
+          count++;
         }
+        assertEquals(2, count);
         LOG.info(Bytes.toString(r.value()));
         LOG.info(Bytes.toString(r.getRow()));
         assertEquals("val-0", Bytes.toString(r.value()));
